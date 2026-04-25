@@ -1,0 +1,175 @@
+plugins {
+    alias libs.plugins.android.application
+}
+
+def localProps = new Properties()
+rootProject.file('local.properties').withInputStream {
+    localProps.load(it)
+}
+
+android {
+    namespace = 'com.Mbox.android.tv'
+
+    compileSdk libs.versions.compileSdk.get().toInteger()
+
+    defaultConfig {
+        applicationId "com.Mbox.android.tv"
+        minSdk libs.versions.minSdk.get().toInteger()
+        //noinspection ExpiredTargetSdkVersion
+        targetSdk 28
+        versionCode 542
+        versionName "5.4.2"
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = ["room.schemaLocation": "$projectDir/schemas".toString(), "eventBusIndex": "com.Mbox.android.tv.event.EventIndex"]
+            }
+        }
+    }
+
+    flavorDimensions = ["mode", "abi"]
+
+    productFlavors {
+        leanback {
+            dimension "mode"
+        }
+        mobile {
+            dimension "mode"
+        }
+        arm64_v8a {
+            dimension "abi"
+            ndk { abiFilters "arm64-v8a" }
+        }
+        armeabi_v7a {
+            dimension "abi"
+            ndk { abiFilters "armeabi-v7a" }
+        }
+    }
+
+    buildFeatures {
+        buildConfig = true
+        viewBinding = true
+    }
+
+    signingConfigs {
+        debug {
+            storeFile file(localProps['storeFile'] ?: 'debug.keystore')
+            keyAlias localProps['keyAlias'] ?: 'androiddebugkey'
+            keyPassword localProps['storePassword'] ?: 'android'
+            storePassword localProps['storePassword'] ?: 'android'
+        }
+        release {
+            storeFile file(localProps['storeFile'])
+            keyAlias localProps['keyAlias']
+            keyPassword localProps['storePassword']
+            storePassword localProps['storePassword']
+        }
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            signingConfig signingConfigs.debug
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro', 'proguard-rules-media.pro'
+        }
+    }
+
+    packagingOptions {
+        resources {
+            exclude 'META-INF/beans.xml'
+            exclude 'META-INF/versions/9/OSGI-INF/MANIFEST.MF'
+        }
+    }
+
+    configurations.configureEach {
+        exclude group: 'com.android.support'
+        exclude group: 'stax', module: 'stax-api'
+        exclude group: 'xpp3', module: 'xpp3'
+        resolutionStrategy {
+            force libs.okhttp
+        }
+    }
+
+    lint {
+        disable 'UnsafeOptInUsageError'
+    }
+
+    compileOptions {
+        coreLibraryDesugaringEnabled = true
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+androidComponents {
+    onVariants(selector().withBuildType('release')) { variant ->
+        def flavors = variant.productFlavors.collectEntries { [(it.first): it.second] }
+        def mode = flavors['mode'] ?: 'mode'
+        def abi = flavors['abi'] ?: 'abi'
+        variant.outputs.each { output ->
+            output.outputFileName.set("${mode}-${abi}.apk")
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.aar"])
+    implementation project(':catvod')
+    implementation project(':chaquo')
+    implementation project(':quickjs')
+    implementation libs.android.gif.drawable
+    implementation libs.appcompat
+    implementation libs.bundles.glide
+    implementation libs.bundles.jupnp
+    implementation libs.core.splashscreen
+    implementation libs.customactivityoncrash
+    implementation libs.eventbus
+    implementation libs.flexbox
+    implementation libs.librtmp.client
+    implementation libs.lifecycle.service
+    implementation libs.lottie
+    implementation libs.material
+    implementation libs.materialdesigncolors
+    implementation libs.android.gif.drawable
+    implementation libs.appcompat
+    implementation libs.bundles.glide
+    implementation libs.bundles.jupnp
+    implementation libs.core.splashscreen
+    implementation libs.customactivityoncrash
+    implementation libs.eventbus
+    implementation libs.flexbox
+    implementation libs.librtmp.client
+    implementation libs.lifecycle.service
+    implementation libs.lottie
+    implementation libs.material
+    implementation libs.materialdesigncolors
+    implementation libs.media3.exoplayer
+    implementation libs.media3.exoplayer.dash
+    implementation libs.media3.exoplayer.hls
+    implementation libs.media3.ui
+    implementation libs.media3.session
+    implementation libs.media3.datasource
+    implementation libs.media3.datasource.okhttp
+    implementation libs.media3.exoplayer.rtsp
+    implementation libs.nanohttpd
+    implementation libs.newpipeextractor
+    implementation libs.palette
+    implementation libs.permissionx
+    implementation libs.recyclerview
+    implementation libs.room.runtime
+    implementation libs.simple.xml
+    implementation libs.swiperefreshlayout
+    implementation libs.textdrawable
+    implementation libs.viewpager2
+    leanbackImplementation libs.androidautosize
+    leanbackImplementation libs.leanback
+    mobileImplementation libs.biometric
+    mobileImplementation libs.zxing.android.embedded
+    annotationProcessor libs.eventbus.annotation.processor
+    annotationProcessor libs.glide.compiler
+    annotationProcessor libs.room.compiler
+    coreLibraryDesugaring libs.desugar.jdk.libs.nio
+}
