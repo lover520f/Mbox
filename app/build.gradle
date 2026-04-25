@@ -21,7 +21,7 @@ android {
         versionName "5.4.2"
         javaCompileOptions {
             annotationProcessorOptions {
-                arguments = ["room.schemaLocation": "$projectDir/schemas".toString(), "eventBusIndex": "com.Mbox.android.tv.event.EventIndex"]
+                arguments = ["room.schemaLocation": "$projectDir/schemas".toString()]
             }
         }
     }
@@ -168,7 +168,7 @@ dependencies {
     leanbackImplementation libs.leanback
     mobileImplementation libs.biometric
     mobileImplementation libs.zxing.android.embedded
-    annotationProcessor libs.eventbus.annotation.processor
+    
     annotationProcessor libs.glide.compiler
     annotationProcessor libs.room.compiler
     coreLibraryDesugaring libs.desugar.jdk.libs.nio
