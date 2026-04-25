@@ -21,7 +21,10 @@ android {
         versionName "5.4.2"
         javaCompileOptions {
             annotationProcessorOptions {
-                arguments = ["room.schemaLocation": "$projectDir/schemas".toString()]
+                arguments = [
+                    "room.schemaLocation": "$projectDir/schemas".toString(),
+                    "eventBusIndex": "com.Mbox.android.tv.event.EventIndex"
+                ]
             }
         }
     }
@@ -171,5 +174,6 @@ dependencies {
     
     annotationProcessor libs.glide.compiler
     annotationProcessor libs.room.compiler
+    annotationProcessor libs.eventbus.annotation.processor
     coreLibraryDesugaring libs.desugar.jdk.libs.nio
 }
