@@ -438,7 +438,7 @@ public class Hook extends PackageManager {
     @NonNull
     @Override
     public CharSequence getApplicationLabel(@NonNull ApplicationInfo info) {
-        return null;
+        return pkgn != null ? pkgn : "Mbox";
     }
 
     @NonNull
