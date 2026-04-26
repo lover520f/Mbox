@@ -220,7 +220,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isTV = await DeviceUtils.isTV();
+    final isTV = false; // DeviceUtils.isTV() 是异步的，已经移除此功能
     
     return Scaffold(
       backgroundColor: Colors.black,

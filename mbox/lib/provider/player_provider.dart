@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../player/mbox_player_controller.dart';
 import '../models/vod.dart';
+import '../models/drm.dart';
 import '../utils/log_utils.dart';
 
 /// 播放器状态管理

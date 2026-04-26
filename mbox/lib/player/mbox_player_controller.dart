@@ -52,11 +52,7 @@ class MBoxPlayerController {
   Future<void> _initPlayer() async {
     await MediaKit.ensureInitialized();
     
-    _player = Player(
-      configuration: const PlayerConfiguration(
-        logLevel: LogLevel.error,
-      ),
-    );
+    _player = Player();
     
     _videoController = video.VideoController(
       _player,
@@ -66,7 +62,7 @@ class MBoxPlayerController {
     );
     
     // 监听播放器状态
-    _player.stream.state.listen((state) {
+    _player.stream.playing.listen((playing) {
       _updateState(state);
     });
     

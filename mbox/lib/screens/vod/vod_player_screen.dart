@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart' as video;
-import '../../models/vod.dart';
+import '../../models/vod.dart' hide Sub, Danmaku;
 import '../../models/sub.dart';
 import '../../models/danmaku.dart';
 import '../../provider/player_provider.dart';
@@ -63,22 +63,17 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
 
   Future<void> _initPlayer() async {
     try {
-      _player = Player(
-        configuration: const PlayerConfiguration(
-          logLevel: LogLevel.warning,
-        ),
-      );
+      _player = Player();
 
       _videoController = video.VideoController(
         _player!,
         configuration: const video.VideoControllerConfiguration(
           enableHardwareAcceleration: true,
-          fit: BoxFit.contain,
         ),
       );
 
       // 设置监听器
-      _player!.stream.playerState.listen((state) {
+      _player!.stream.playing.listen((playing) {
         setState(() {
           _isBuffering = state.buffering;
           _isPlaying = state.playing;

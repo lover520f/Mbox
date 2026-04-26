@@ -4,6 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
+import 'package:shelf/shelf_io.dart';
 import '../models/vod_config.dart';
 import '../network/okhttp_client.dart';
 import '../utils/log_utils.dart';
@@ -17,11 +18,12 @@ class AppConfig {
   
   // HTTP 服务器相关
   static late int _serverPort = 9978;
-  static late Server? _httpServer;
+  static late HttpServer? _httpServer;
 
   /// 初始化配置
   static Future<void> init() async {
-    await Hive.initFlutter();
+    final directory = await getApplicationDocumentsDirectory();
+    await Hive.init(directory.path);
     _box = await Hive.openBox(boxName);
     
     // 获取应用目录
