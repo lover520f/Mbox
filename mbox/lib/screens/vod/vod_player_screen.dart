@@ -75,8 +75,13 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
       // 设置监听器
       _player!.stream.playing.listen((playing) {
         setState(() {
-          _isBuffering = state.buffering;
-          _isPlaying = state.playing;
+          _isPlaying = playing;
+        });
+      });
+
+      _player!.stream.buffer.listen((buffering) {
+        setState(() {
+          _isBuffering = buffering;
         });
       });
 

@@ -63,11 +63,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
     }
 
     try {
-      _player = Player(
-        configuration: const PlayerConfiguration(
-          logLevel: LogLevel.error,
-        ),
-      );
+      _player = Player();
 
       _videoController = video.VideoController(
         _player!,
@@ -77,10 +73,15 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
       );
 
       // 设置监听器
-      _player!.stream.state.listen((state) {
+      _player!.stream.playing.listen((playing) {
         setState(() {
-          _isBuffering = state.buffering;
-          _isPlaying = state.playing;
+          _isPlaying = playing;
+        });
+      });
+
+      _player!.stream.buffer.listen((buffering) {
+        setState(() {
+          _isBuffering = buffering;
         });
       });
 
@@ -171,10 +172,10 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
   }
 
   void _nextChannel() {
-    if (_group == null || _group!.channels == null) return;
+    if (_group == null || _group!.channel == null) return;
     
-    final channels = _group!.channels!;
-    final currentIndex = channels.indexWhere((c) => c.id == _channel?.id);
+    final channels = _group!.channel!;
+    final currentIndex = channels.indexWhere((c) => c.name == _channel?.name);
     
     if (currentIndex < 0 || currentIndex >= channels.length - 1) {
       Get.snackbar('提示', '已经是最后一个频道');
@@ -192,10 +193,10 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
   }
 
   void _prevChannel() {
-    if (_group == null || _group!.channels == null) return;
+    if (_group == null || _group!.channel == null) return;
     
-    final channels = _group!.channels!;
-    final currentIndex = channels.indexWhere((c) => c.id == _channel?.id);
+    final channels = _group!.channel!;
+    final currentIndex = channels.indexWhere((c) => c.name == _channel?.name);
     
     if (currentIndex <= 0) {
       Get.snackbar('提示', '已经是第一个频道');
