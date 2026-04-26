@@ -6,6 +6,7 @@ import '../../models/vod_config.dart';
 import '../../provider/config_provider.dart';
 import '../../provider/player_provider.dart';
 import '../../utils/device_utils.dart';
+import '../../utils/log_utils.dart';
 import '../../routes/app_routes.dart';
 
 /// 点播详情页面

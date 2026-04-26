@@ -50,7 +50,7 @@ class MBoxPlayerController {
   }
 
   Future<void> _initPlayer() async {
-    await MediaKit.ensureInitialized();
+    MediaKit.ensureInitialized();
     
     _player = Player();
     

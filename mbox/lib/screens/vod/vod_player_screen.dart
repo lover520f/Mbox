@@ -79,9 +79,9 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
         });
       });
 
-      _player!.stream.buffer.listen((buffering) {
+      _player!.stream.buffer.listen((duration) {
         setState(() {
-          _isBuffering = buffering;
+          _isBuffering = duration != Duration.zero;
         });
       });
 
@@ -159,7 +159,7 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
     final newPosition = forward 
         ? _position + skipDuration 
         : _position - skipDuration;
-    await _seek(newPosition.clamp(Duration.zero, _duration));
+    await _seek(newPosition < Duration.zero ? Duration.zero : (newPosition > _duration ? _duration : newPosition));
   }
 
   void _nextEpisode() {

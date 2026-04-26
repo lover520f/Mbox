@@ -34,6 +34,11 @@ class Vod {
   final String? des;
   final List<PlayList>? playlists;
   final List<Series>? series;
+  
+  // 别名 getter
+  String get id => vodId;
+  String get name => vodName;
+  String? get playUrl => vodPlayUrl;
 
   Vod({
     required this.vodId,
@@ -171,6 +176,9 @@ class Sub {
     this.format,
     this.flag,
   });
+  
+  // 别名 getter
+  String? get label => name;
 
   factory Sub.fromJson(Map<String, dynamic> json) => _$SubFromJson(json);
   Map<String, dynamic> toJson() => _$SubToJson(this);

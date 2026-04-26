@@ -79,9 +79,9 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
         });
       });
 
-      _player!.stream.buffer.listen((buffering) {
+      _player!.stream.buffer.listen((duration) {
         setState(() {
-          _isBuffering = buffering;
+          _isBuffering = duration != Duration.zero;
         });
       });
 

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../player/mbox_player_controller.dart';
-import '../models/vod.dart';
+import '../models/vod.dart' hide Sub, Danmaku;
 import '../models/drm.dart';
+import '../models/sub.dart' as sub;
+import '../models/danmaku.dart' as danmaku;
 import '../utils/log_utils.dart';
 
 /// 播放器状态管理
@@ -46,8 +48,8 @@ class PlayerProvider extends ChangeNotifier {
     required Vod vod,
     String? userAgent,
     Map<String, String>? headers,
-    List<Sub>? subtitles,
-    List<Danmaku>? danmakus,
+    List<sub.Sub>? subtitles,
+    List<danmaku.Danmaku>? danmakus,
     Drm? drm,
   }) async {
     try {

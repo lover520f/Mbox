@@ -23,7 +23,7 @@ class AppConfig {
   /// 初始化配置
   static Future<void> init() async {
     final directory = await getApplicationDocumentsDirectory();
-    await Hive.init(directory.path);
+    Hive.init(directory.path);
     _box = await Hive.openBox(boxName);
     
     // 获取应用目录

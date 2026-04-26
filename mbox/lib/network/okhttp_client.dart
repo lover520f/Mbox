@@ -130,7 +130,7 @@ class OkHttpUtils {
     try {
       final response = await _dio!.get(
         url,
-        headers: headers,
+        options: Options(headers: headers),
         queryParameters: queryParameters,
       );
       
@@ -158,7 +158,7 @@ class OkHttpUtils {
       final response = await _dio!.post(
         url,
         data: data,
-        headers: headers,
+        options: Options(headers: headers),
         queryParameters: queryParameters,
       );
       

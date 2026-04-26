@@ -18,6 +18,9 @@ class Sub {
     this.format,
     this.flag,
   });
+  
+  // 别名 getter
+  String? get label => name;
 
   factory Sub.fromJson(Map<String, dynamic> json) => _$SubFromJson(json);
   Map<String, dynamic> toJson() => _$SubToJson(this);
