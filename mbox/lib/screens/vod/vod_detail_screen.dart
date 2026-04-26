@@ -91,7 +91,6 @@ class _VodDetailScreenState extends State<VodDetailScreen> {
     
     final playerProvider = context.read<PlayerProvider>();
     playerProvider.setCurrentEpisode(url);
-    playerProvider.setVod(_detailVod!);
     
     Get.toNamed(AppRoutes.vodPlayer, arguments: {
       'vod': _detailVod!,
