@@ -5,6 +5,8 @@ import '../../provider/app_provider.dart';
 import '../../widgets/vod_grid.dart';
 import '../../widgets/source_list.dart';
 import '../../widgets/loading_dialog.dart';
+import '../../crawler/spider_engine.dart';
+import '../../utils/log_utils.dart';
 
 /// TV 版首页（Leanback 风格）
 class LeanbackHomeScreen extends StatefulWidget {
@@ -17,6 +19,52 @@ class LeanbackHomeScreen extends StatefulWidget {
 class _LeanbackHomeScreenState extends State<LeanbackHomeScreen> {
   static const int _tabCount = 4;
   int _currentTabIndex = 0;
+  bool _isSpiderInitialized = false;
+  List<Map<String, dynamic>> _homeClasses = [];
+  bool _isLoadingHome = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initSpiderEngine();
+  }
+
+  Future<void> _initSpiderEngine() async {
+    try {
+      Log.d('Initializing spider engine...');
+      await SpiderEngine.init('', '');
+      setState(() {
+        _isSpiderInitialized = true;
+      });
+      Log.d('Spider engine initialized');
+      // 加载首页分类
+      _loadHomeContent();
+    } catch (e) {
+      Log.e('Failed to initialize spider engine: $e');
+    }
+  }
+
+  Future<void> _loadHomeContent() async {
+    setState(() {
+      _isLoadingHome = true;
+    });
+    
+    try {
+      final result = await SpiderEngine.home('');
+      if (result['class'] != null && result['class'] is List) {
+        setState(() {
+          _homeClasses = List<Map<String, dynamic>>.from(result['class']);
+        });
+        Log.d('Loaded ${_homeClasses.length} home categories');
+      }
+    } catch (e) {
+      Log.e('Load home content error: $e');
+    } finally {
+      setState(() {
+        _isLoadingHome = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -149,6 +197,65 @@ class _LeanbackHomeScreenState extends State<LeanbackHomeScreen> {
   }
 
   Widget _buildHomeTab() {
+    if (!_isSpiderInitialized) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text(
+              '初始化爬虫引擎...',
+              style: TextStyle(fontSize: 18, color: Colors.white),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_isLoadingHome && _homeClasses.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text(
+              '加载中...',
+              style: TextStyle(fontSize: 18, color: Colors.white),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_homeClasses.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.movie_outlined,
+              size: 80,
+              color: Colors.white54,
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              '暂无内容',
+              style: TextStyle(fontSize: 24, color: Colors.white),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                _loadHomeContent();
+              },
+              child: const Text('刷新'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -160,6 +267,37 @@ class _LeanbackHomeScreenState extends State<LeanbackHomeScreen> {
               fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // 分类列表
+          SizedBox(
+            height: 50,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _homeClasses.length + 1,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  // 全部按钮
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: Chip(
+                      label: const Text('全部', style: TextStyle(color: Colors.white)),
+                      backgroundColor: Colors.blue,
+                      avatar: const Icon(Icons.all_inclusive, color: Colors.white, size: 18),
+                    ),
+                  );
+                }
+                final category = _homeClasses[index - 1];
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Chip(
+                    label: Text(category['type_name'] ?? '', style: const TextStyle(color: Colors.white)),
+                    backgroundColor: Colors.grey[800],
+                    avatar: Icon(Icons.category, color: Colors.white.withOpacity(0.7), size: 18),
+                  ),
+                );
+              },
             ),
           ),
           const SizedBox(height: 16),
