@@ -36,7 +36,7 @@
         android:required="false" />
 
     <application
-        android:label="MBox"
+        android:label="魔宝盒"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true"

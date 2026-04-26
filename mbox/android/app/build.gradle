@@ -64,7 +64,7 @@ android {
         leanback {
             dimension "default"
             applicationIdSuffix ".tv"
-            resValue "string", "app_name", "MBox TV"
+            resValue "string", "app_name", "魔宝盒 TV"
             manifestPlaceholders = [
                 screenOrientation: "landscape"
             ]
@@ -72,7 +72,7 @@ android {
 
         mobile {
             dimension "default"
-            resValue "string", "app_name", "MBox"
+            resValue "string", "app_name", "魔宝盒"
             manifestPlaceholders = [
                 screenOrientation: "unspecified"
             ]
