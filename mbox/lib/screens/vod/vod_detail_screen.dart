@@ -1,15 +1,14 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import '../../models/vod.dart';
-import '../../models/vod_config.dart';
 import '../../provider/config_provider.dart';
 import '../../provider/player_provider.dart';
-import '../../utils/device_utils.dart';
 import '../../utils/log_utils.dart';
 import '../../routes/app_routes.dart';
 
-/// 点播详情页面
+/// 视频详情页面
 class VodDetailScreen extends StatefulWidget {
   final Vod vod;
   final String siteId;
@@ -25,88 +24,114 @@ class VodDetailScreen extends StatefulWidget {
 }
 
 class _VodDetailScreenState extends State<VodDetailScreen> {
-  late Vod _vod;
-  int _selectedSeasonIndex = 0;
-  int _selectedEpisodeIndex = 0;
+  Vod? _detailVod;
   bool _isLoading = false;
-  String? _currentEpisodeUrl;
+  int _selectedTabIndex = 0;
+  int _selectedEpisodeIndex = -1;
+  String? _selectedFrom;
+  
+  // 解析后的播放列表
+  List<Map<String, String>> _episodes = [];
 
   @override
   void initState() {
     super.initState();
-    _vod = widget.vod;
+    _detailVod = widget.vod;
     _loadDetail();
   }
 
   Future<void> _loadDetail() async {
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final configProvider = context.read<ConfigProvider>();
-      final detail = await configProvider.getDetail(widget.siteId, _vod.id);
+      final detail = await configProvider.getDetail(widget.siteId, _detailVod!.id);
       
       if (detail != null) {
         setState(() {
-          _vod = detail;
+          _detailVod = detail;
           _parseEpisodes();
         });
+        Log.d('Detail loaded: ${detail.vodName}');
       }
     } catch (e) {
-      Log.d('加载详情失败：$e');
+      Log.e('Load detail error: $e');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
+  /// 解析播放集数
   void _parseEpisodes() {
-    // 解析剧集信息
-    if (_vod.playUrl != null && _vod.playUrl!.isNotEmpty) {
-      // 解析播放 URL
+    if (_detailVod == null || _detailVod!.vodPlayUrl == null) return;
+
+    _episodes.clear();
+    final playUrl = _detailVod!.vodPlayUrl!;
+    
+    // 格式：第 1 集$http://xxx#第 2 集$http://yyy
+    final episodePattern = RegExp(r'([^#\$]+)\$(.+)');
+    final matches = episodePattern.allMatches(playUrl);
+    
+    for (final match in matches) {
+      final title = match.group(1)?.trim() ?? '';
+      final url = match.group(2)?.trim() ?? '';
+      if (title.isNotEmpty && url.isNotEmpty) {
+        _episodes.add({'title': title, 'url': url});
+      }
     }
+    
+    _selectedFrom = _detailVod!.vodPlayFrom;
+    Log.d('Parsed ${_episodes.length} episodes');
   }
 
-  void _playEpisode(int episodeIndex) {
+  void _onEpisodeSelected(int index, String url) {
+    setState(() {
+      _selectedEpisodeIndex = index;
+    });
+    
     final playerProvider = context.read<PlayerProvider>();
-    playerProvider.setCurrentEpisode(_currentEpisodeUrl ?? '');
+    playerProvider.setCurrentEpisode(url);
+    playerProvider.setVod(_detailVod!);
     
     Get.toNamed(AppRoutes.vodPlayer, arguments: {
-      'vod': _vod,
-      'episodeIndex': episodeIndex,
-      'url': _currentEpisodeUrl,
+      'vod': _detailVod!,
+      'episodeIndex': index,
+      'url': url,
+      'title': _episodes[index]['title'],
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final isTV = false; // DeviceUtils 已移除
-    
     return Scaffold(
       appBar: AppBar(
-        title: Text(_vod.vodName ?? '详情'),
+        title: Text(_detailVod?.vodName ?? '详情'),
         actions: [
           IconButton(
             icon: const Icon(Icons.play_arrow),
-            onPressed: () => _playEpisode(_selectedEpisodeIndex),
+            onPressed: _selectedEpisodeIndex >= 0 
+                ? () => _onEpisodeSelected(_selectedEpisodeIndex, _episodes[_selectedEpisodeIndex]['url']!)
+                : null,
           ),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _buildContent(isTV),
+          : _buildContent(),
     );
   }
 
-  Widget _buildContent(bool isTV) {
+  Widget _buildContent() {
+    if (_detailVod == null) {
+      return const Center(child: Text('加载失败'));
+    }
+
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (isTV) {
+        if (constraints.maxWidth > 600) {
           return _buildTVLayout();
         } else {
-          return _buildMobileLayout(constraints);
+          return _buildMobileLayout();
         }
       },
     );
@@ -123,61 +148,37 @@ class _VodDetailScreenState extends State<VodDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 海报
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: _vod.vodPic != null
+                  child: _detailVod!.vodPic != null
                       ? Image.network(
-                          _vod.vodPic!,
+                          _detailVod!.vodPic!,
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: 300,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              height: 300,
-                              color: Colors.grey[800],
-                              child: const Icon(Icons.movie, size: 64),
-                            );
-                          },
+                          errorBuilder: (_, __, ___) => _buildPlaceholder(),
                         )
-                      : Container(
-                          height: 300,
-                          color: Colors.grey[800],
-                          child: const Icon(Icons.movie, size: 64),
-                        ),
+                      : _buildPlaceholder(),
                 ),
                 const SizedBox(height: 16),
-                // 基本信息
-                Text(
-                  _vod.vodName ?? '',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                if (_vod.vodYear != null)
-                  Text('年份：${_vod.vodYear}', style: TextStyle(color: Colors.grey[400])),
-                if (_vod.vodArea != null)
-                  Text('地区：${_vod.vodArea}', style: TextStyle(color: Colors.grey[400])),
-                if (_vod.typeName != null)
-                  Text('类型：${_vod.typeName}', style: TextStyle(color: Colors.grey[400])),
-                if (_vod.vodRemarks != null)
-                  Text('备注：${_vod.vodRemarks}', style: TextStyle(color: Colors.grey[400])),
-                if (_vod.vodDirector != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text('导演：${_vod.vodDirector}', style: TextStyle(color: Colors.grey[400])),
-                  ),
-                if (_vod.vodActor != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text('主演：${_vod.vodActor}', style: TextStyle(color: Colors.grey[400])),
-                  ),
-                if (_vod.remark != null && _vod.remark!.isNotEmpty)
+                Text(_detailVod!.vodName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                _infoRow('年份', _detailVod!.vodYear),
+                _infoRow('地区', _detailVod!.vodArea),
+                _infoRow('类型', _detailVod!.typeName),
+                _infoRow('备注', _detailVod!.vodRemarks),
+                if (_detailVod!.vodDirector != null) _textRow('导演', _detailVod!.vodDirector!),
+                if (_detailVod!.vodActor != null) _textRow('主演', _detailVod!.vodActor!),
+                if (_detailVod!.vodContent != null && _detailVod!.vodContent!.isNotEmpty)
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.only(top: 16.0),
                       child: SingleChildScrollView(
                         child: Text(
-                          _vod.remark!,
+                          _detailVod!.vodContent ?? '',
                           style: TextStyle(color: Colors.grey[300]),
+                          maxLines: 6,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
@@ -186,16 +187,16 @@ class _VodDetailScreenState extends State<VodDetailScreen> {
             ),
           ),
         ),
-        // 右侧剧集列表
+        // 右侧集数列表
         Expanded(
           flex: 3,
-          child: _buildEpisodeList(),
+          child: _buildEpisodeSection(),
         ),
       ],
     );
   }
 
-  Widget _buildMobileLayout(BoxConstraints constraints) {
+  Widget _buildMobileLayout() {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,179 +207,151 @@ class _VodDetailScreenState extends State<VodDetailScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 海报
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: _vod.vodPic != null
+                  child: _detailVod!.vodPic != null
                       ? Image.network(
-                          _vod.vodPic!,
+                          _detailVod!.vodPic!,
                           fit: BoxFit.cover,
-                          width: 150,
-                          height: 220,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: 150,
-                              height: 220,
-                              color: Colors.grey[800],
-                              child: const Icon(Icons.movie, size: 48),
-                            );
-                          },
+                          width: 120,
+                          height: 180,
+                          errorBuilder: (_, __, ___) => _buildMobilePlaceholder(),
                         )
-                      : Container(
-                          width: 150,
-                          height: 220,
-                          color: Colors.grey[800],
-                          child: const Icon(Icons.movie, size: 48),
-                        ),
+                      : _buildMobilePlaceholder(),
                 ),
                 const SizedBox(width: 16),
-                // 信息
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        _vod.vodName ?? '',
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
+                      Text(_detailVod!.vodName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
-                      if (_vod.vodYear != null)
-                        Text('年份：${_vod.vodYear}', style: TextStyle(color: Colors.grey[400])),
-                      if (_vod.vodArea != null)
-                        Text('地区：${_vod.vodArea}', style: TextStyle(color: Colors.grey[400])),
-                      if (_vod.typeName != null)
-                        Text('类型：${_vod.typeName}', style: TextStyle(color: Colors.grey[400])),
-                      if (_vod.vodRemarks != null)
-                        Text('备注：${_vod.vodRemarks}', style: TextStyle(color: Colors.grey[400])),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.play_arrow),
-                        label: const Text('立即播放'),
-                        onPressed: () => _playEpisode(_selectedEpisodeIndex),
-                      ),
+                      _infoRow('年份', _detailVod!.vodYear),
+                      _infoRow('地区', _detailVod!.vodArea),
+                      _infoRow('类型', _detailVod!.typeName),
+                      _infoRow('备注', _detailVod!.vodRemarks),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          // 导演和演员
-          if (_vod.vodDirector != null || _vod.vodActor != null)
+          // 简介
+          if (_detailVod!.vodContent != null && _detailVod!.vodContent!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (_vod.vodDirector != null)
-                    Text('导演：${_vod.vodDirector}', style: TextStyle(color: Colors.grey[400])),
-                  if (_vod.vodActor != null)
-                    Text('主演：${_vod.vodActor}', style: TextStyle(color: Colors.grey[400])),
-                ],
-              ),
-            ),
-          // 简介
-          if (_vod.remark != null && _vod.remark!.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('简介', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text('简介', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Text(_vod.remark!, style: TextStyle(color: Colors.grey[300])),
+                  Text(
+                    _detailVod!.vodContent ?? '',
+                    style: TextStyle(color: Colors.grey[300]),
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),
-          // 剧集列表
-          _buildEpisodeList(),
+          const SizedBox(height: 16),
+          // 集数列表
+          _buildEpisodeSection(),
         ],
       ),
     );
   }
 
-  Widget _buildEpisodeList() {
+  Widget _buildPlaceholder() {
+    return Container(
+      height: 300,
+      color: Colors.grey[800],
+      child: const Icon(Icons.movie, size: 64),
+    );
+  }
+
+  Widget _buildMobilePlaceholder() {
+    return Container(
+      width: 120,
+      height: 180,
+      color: Colors.grey[800],
+      child: const Icon(Icons.movie, size: 48),
+    );
+  }
+
+  Widget _infoRow(String label, String? value) {
+    if (value == null || value.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 4.0),
+      child: Text('$label: $value', style: TextStyle(color: Colors.grey[400], fontSize: 14)),
+    );
+  }
+
+  Widget _textRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: RichText(
+        text: TextSpan(
+          style: TextStyle(color: Colors.grey[400], fontSize: 14),
+          children: [
+            TextSpan(text: '$label:', style: const TextStyle(fontWeight: FontWeight.bold)),
+            TextSpan(text: ' $value'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEpisodeSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 季数选择（如果有）
-        if (_vod.series != null && _vod.series!.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SizedBox(
-              height: 40,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _vod.series!.length,
-                itemBuilder: (context, index) {
-                  final isSelected = index == _selectedSeasonIndex;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: ChoiceChip(
-                      label: Text(_vod.series![index].name ?? '第${index + 1}季'),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() {
-                          _selectedSeasonIndex = index;
-                        });
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        // 集数网格
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Text(
-            '选集',
+            _selectedFrom != null ? '$_selectedFrom 共${_episodes.length}集' : '播放列表',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 6,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: 1.5,
-            ),
-            itemCount: _vod.playlists?.length ?? 0,
-            itemBuilder: (context, index) {
-              final playlist = _vod.playlists?[index];
-              final isSelected = index == _selectedEpisodeIndex;
-              return InkWell(
-                onTap: () {
-                  setState(() {
-                    _selectedEpisodeIndex = index;
-                    _currentEpisodeUrl = playlist?.url;
-                  });
-                  _playEpisode(index);
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isSelected ? Theme.of(context).primaryColor : Colors.grey[800],
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(
-                      color: isSelected ? Colors.white : Colors.transparent,
-                      width: 2,
-                    ),
+        if (_episodes.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text('暂无播放资源', style: TextStyle(color: Colors.grey)),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 2,
+              ),
+              itemCount: _episodes.length,
+              itemBuilder: (context, index) {
+                final episode = _episodes[index];
+                final isSelected = _selectedEpisodeIndex == index;
+                return ElevatedButton(
+                  onPressed: () => _onEpisodeSelected(index, episode['url']!),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isSelected ? Colors.blue : Colors.grey[800],
+                    foregroundColor: isSelected ? Colors.white : Colors.white70,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   ),
-                  alignment: Alignment.center,
                   child: Text(
-                    playlist?.name ?? '第${index + 1}集',
-                    style: const TextStyle(fontSize: 14),
+                    episode['title'] ?? '第${index + 1}集',
+                    style: const TextStyle(fontSize: 12),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
+        const SizedBox(height: 16),
       ],
     );
   }

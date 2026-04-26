@@ -8,6 +8,7 @@ import '../../widgets/loading_dialog.dart';
 import '../../widgets/config_dialog.dart';
 import '../../crawler/spider_engine.dart';
 import '../../utils/log_utils.dart';
+import '../../models/vod.dart';
 
 /// TV 版首页（Leanback 风格）
 class LeanbackHomeScreen extends StatefulWidget {
@@ -24,6 +25,7 @@ class _LeanbackHomeScreenState extends State<LeanbackHomeScreen> {
   List<Map<String, dynamic>> _homeClasses = [];
   bool _isLoadingHome = false;
   String? _currentSiteKey;
+  List<Vod> _vodList = [];
 
   @override
   void initState() {
@@ -48,18 +50,41 @@ class _LeanbackHomeScreenState extends State<LeanbackHomeScreen> {
   Future<void> _loadHomeContent() async {
     final configProvider = context.read<ConfigProvider>();
     if (configProvider.config == null) return;
+    
+    // 使用第一个站点
+    final siteId = configProvider.config!.sites.first.key;
 
     setState(() {
       _isLoadingHome = true;
     });
     
     try {
+      // 加载首页分类
       final result = await SpiderEngine.home('');
       if (result['class'] != null && result['class'] is List) {
         setState(() {
           _homeClasses = List<Map<String, dynamic>>.from(result['class']);
         });
         Log.d('Loaded ${_homeClasses.length} home categories');
+      }
+      
+      // 加载第一个分类的内容
+      if (_homeClasses.isNotEmpty) {
+        final firstClass = _homeClasses.first;
+        final contentResult = await configProvider.getCategoryContent(
+          siteId,
+          firstClass['type_id'],
+          '1',
+        );
+        
+        if (contentResult['list'] != null && contentResult['list'] is List) {
+          setState(() {
+            _vodList = (contentResult['list'] as List)
+                .map((item) => Vod.fromJson(item as Map<String, dynamic>))
+                .toList();
+          });
+          Log.d('Loaded ${_vodList.length} videos');
+        }
       }
     } catch (e) {
       Log.e('Load home content error: $e');
@@ -320,8 +345,15 @@ class _LeanbackHomeScreenState extends State<LeanbackHomeScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          const Expanded(
-            child: VodGrid(),
+          Expanded(
+            child: _vodList.isEmpty && !_isLoadingHome
+                ? const Center(
+                    child: Text(
+                      '暂无内容',
+                      style: TextStyle(fontSize: 18, color: Colors.white54),
+                    ),
+                  )
+                : VodGrid(items: _vodList),
           ),
         ],
       ),

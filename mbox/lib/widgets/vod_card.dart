@@ -13,7 +13,11 @@ class VodCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Get.toNamed(AppRoutes.vodDetail, arguments: {'vod': vod});
+        // 从上下文获取当前站点 ID
+        Get.toNamed(AppRoutes.vodDetail, arguments: {
+          'vod': vod,
+          'siteId': '1', // TODO: 从父组件传递
+        });
       },
       child: Container(
         decoration: BoxDecoration(
