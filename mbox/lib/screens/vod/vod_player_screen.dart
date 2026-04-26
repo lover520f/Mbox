@@ -276,7 +276,7 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isTV = DeviceUtils.isTV(context);
+    final isTV = false; // DeviceUtils 已移除
     
     return Scaffold(
       backgroundColor: Colors.black,
@@ -493,7 +493,7 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
                     
                     // 弹幕
                     IconButton(
-                      icon: Icon(_showDanmakus ? Icons.comment : Icons.comment_off),
+                      icon: Icon(_showDanmakus ? Icons.comment : Icons.chat_bubble_outline),
                       color: Colors.white,
                       onPressed: _showDanmakuDialog,
                     ),

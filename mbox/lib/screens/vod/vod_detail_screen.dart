@@ -82,7 +82,7 @@ class _VodDetailScreenState extends State<VodDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isTV = DeviceUtils.isTV(context);
+    final isTV = false; // DeviceUtils 已移除
     
     return Scaffold(
       appBar: AppBar(

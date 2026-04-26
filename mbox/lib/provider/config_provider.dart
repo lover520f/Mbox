@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../models/vod_config.dart';
+import '../models/vod.dart';
 import '../config/app_config.dart';
 import '../utils/log_utils.dart';
 
@@ -71,5 +72,16 @@ class ConfigProvider extends ChangeNotifier {
     _config = null;
     _configName = null;
     notifyListeners();
+  }
+  
+  /// 加载直播配置
+  Future<VodConfig?> loadLive() async {
+    return _config;
+  }
+  
+  /// 获取详情
+  Future<Vod?> getDetail(String siteId, String vodId) async {
+    // TODO: 实现获取详情逻辑
+    return null;
   }
 }

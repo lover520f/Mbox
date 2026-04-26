@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import '../models/vod.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/vod/vod_detail_screen.dart';
 import '../screens/vod/vod_player_screen.dart';
@@ -18,7 +19,16 @@ class AppRoutes {
 
   static List<GetPage> routes = [
     GetPage(name: home, page: () => const HomeScreen()),
-    GetPage(name: vodDetail, page: () => const VodDetailScreen()),
+    GetPage(
+      name: vodDetail,
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>?;
+        return VodDetailScreen(
+          vod: args?['vod'] as Vod,
+          siteId: args?['siteId'] as String,
+        );
+      },
+    ),
     GetPage(name: vodPlayer, page: () => const VodPlayerScreen()),
     GetPage(name: live, page: () => const LiveScreen()),
     GetPage(name: livePlayer, page: () => const LivePlayerScreen()),

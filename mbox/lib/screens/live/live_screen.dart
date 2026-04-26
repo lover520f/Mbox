@@ -16,7 +16,7 @@ class LiveScreen extends StatefulWidget {
 }
 
 class _LiveScreenState extends State<LiveScreen> {
-  LiveConfig? _liveConfig;
+  Live? _liveConfig;
   List<Group> _groups = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -37,11 +37,14 @@ class _LiveScreenState extends State<LiveScreen> {
 
     try {
       final configProvider = context.read<ConfigProvider>();
-      final config = await configProvider.loadLive();
+      final config = configProvider.config;
+      
+      if (config?.lives != null && config!.lives!.isNotEmpty) {
+        _liveConfig = config.lives.first;
+      }
       
       setState(() {
-        _liveConfig = config;
-        _groups = config?.groups ?? [];
+        _groups = _liveConfig?.groups ?? [];
         if (_groups.isNotEmpty && _selectedGroup == null) {
           _selectedGroup = _groups.first;
         }
@@ -75,7 +78,7 @@ class _LiveScreenState extends State<LiveScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isTV = DeviceUtils.isTV(context);
+    final isTV = false; // DeviceUtils.isTV() 是异步方法
     
     return Scaffold(
       appBar: AppBar(

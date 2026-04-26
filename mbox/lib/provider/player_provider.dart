@@ -134,18 +134,23 @@ class PlayerProvider extends ChangeNotifier {
   }
 
   /// 释放资源
-  Future<void> dispose() async {
-    await _controller?.dispose();
-    _controller = null;
-    _currentVod = null;
-    _currentUrl = null;
-    _isPlaying = false;
-    notifyListeners();
-  }
 
   /// 设置当前集数索引
   void setCurrentEpisodeIndex(int index) {
     _currentEpisodeIndex = index;
     notifyListeners();
+  }
+  
+  /// 设置当前集数 URL
+  void setCurrentEpisode(String url) {
+    _currentUrl = url;
+    notifyListeners();
+  }
+  
+  /// 释放资源
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
   }
 }
