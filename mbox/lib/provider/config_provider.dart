@@ -4,6 +4,7 @@ import '../models/vod_config.dart';
 import '../models/vod.dart';
 import '../config/app_config.dart';
 import '../utils/log_utils.dart';
+import '../crawler/spider_engine.dart';
 
 /// 配置状态管理
 class ConfigProvider extends ChangeNotifier {
@@ -81,7 +82,101 @@ class ConfigProvider extends ChangeNotifier {
   
   /// 获取详情
   Future<Vod?> getDetail(String siteId, String vodId) async {
-    // TODO: 实现获取详情逻辑
-    return null;
+    try {
+      if (_config == null) return null;
+      
+      Log.d('Getting detail: siteId=$siteId, vodId=$vodId');
+      
+      // 调用爬虫详情接口
+      final result = await SpiderEngine.detail(siteId, vodId);
+      
+      if (result['list'] != null && result['list'] is List && (result['list'] as List).isNotEmpty) {
+        final data = result['list'][0] as Map<String, dynamic>;
+        final vod = Vod.fromJson(data);
+        Log.d('Detail loaded: ${vod.vodName}');
+        return vod;
+      }
+      
+      return null;
+    } catch (e) {
+      Log.e('Get detail error: $e');
+      return null;
+    }
+  }
+
+  /// 获取播放地址
+  Future<String?> getPlayUrl(String siteId, String episodeUrl, String flag) async {
+    try {
+      if (_config == null) return null;
+      
+      Log.d('Getting play URL: siteId=$siteId, episodeUrl=$episodeUrl, flag=$flag');
+      
+      // 调用爬虫播放接口
+      final result = await SpiderEngine.play(siteId, episodeUrl, flag);
+      
+      if (result['url'] != null && result['url'] is String) {
+        final url = result['url'] as String;
+        Log.d('Play URL: $url');
+        return url;
+      }
+      
+      return null;
+    } catch (e) {
+      Log.e('Get play URL error: $e');
+      return null;
+    }
+  }
+
+  /// 搜索
+  Future<List<Vod>> search(String siteId, String keyword, {bool quick = false}) async {
+    try {
+      if (_config == null) return [];
+      
+      Log.d('Searching: siteId=$siteId, keyword=$keyword, quick=$quick');
+      
+      // 调用爬虫搜索接口
+      final result = await SpiderEngine.search(quick, keyword);
+      
+      if (result['list'] != null && result['list'] is List) {
+        final list = result['list'] as List;
+        final vods = list.map((item) => Vod.fromJson(item as Map<String, dynamic>)).toList();
+        Log.d('Search results: ${vods.length} items');
+        return vods;
+      }
+      
+      return [];
+    } catch (e) {
+      Log.e('Search error: $e');
+      return [];
+    }
+  }
+
+  /// 获取分类内容
+  Future<Map<String, dynamic>> getCategoryContent(
+    String siteId,
+    String typeId,
+    String page, {
+    String filter = '1',
+    String? extend,
+  }) async {
+    try {
+      if (_config == null) return {'list': [], 'page': 1, 'pagecount': 1, 'limit': 20, 'total': 0};
+      
+      Log.d('Getting category: siteId=$siteId, typeId=$typeId, page=$page');
+      
+      // 调用爬虫分类接口
+      final result = await SpiderEngine.category(
+        tid: siteId,
+        pg: page,
+        filter: filter,
+        extend: extend,
+      );
+      
+      Log.d('Category results: page=${result['page']}, list=${(result['list'] as List?)?.length ?? 0}');
+      return result;
+    } catch (e) {
+      Log.e('Get category error: $e');
+      return {'list': [], 'page': 1, 'pagecount': 1, 'limit': 20, 'total': 0};
+    }
   }
 }
