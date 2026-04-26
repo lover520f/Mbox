@@ -25,7 +25,7 @@ import io.flutter.plugin.common.PluginRegistry;
 
 public class MainActivity extends FlutterActivity 
         implements PluginRegistry.RequestPermissionsResultListener,
-                   LocalHttpServer.ApiHandler {
+                   /*LocalHttpServer.ApiHandler*/ {
     private static final String TAG = "MainActivity";
     
     // Method Channel
@@ -36,7 +36,7 @@ public class MainActivity extends FlutterActivity
     
     // 组件
     private JarSpiderLoader spiderLoader;
-    private LocalHttpServer httpServer;
+    private /*LocalHttpServer/* httpServer;
     private DlnaController dlnaController;
     private DrmManager currentDrm;
     private JsSpiderLoader jsSpiderLoader;
@@ -61,7 +61,7 @@ public class MainActivity extends FlutterActivity
         
         // 初始化组件
         spiderLoader = new JarSpiderLoader(this);
-        dlnaController = new DlnaController(this);
+        dlnaController = new /*DlnaController(this);
         
         // 注册 Method Channels
         nativeChannel = new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), NATIVE_CHANNEL);
@@ -194,7 +194,7 @@ public class MainActivity extends FlutterActivity
             httpServer.stop();
         }
         if (dlnaController != null) {
-            dlnaController.stop();
+            /*dlnaController.*/.stop();
         }
         if (spiderLoader != null) {
             spiderLoader.destroyAll();
@@ -288,7 +288,7 @@ public class MainActivity extends FlutterActivity
     }
     
     private void getIpAddress(MethodChannel.Result result) {
-        String ip = DlnaController.getDeviceIpAddress();
+        String ip = /*DlnaController.getDeviceIpAddress();
         result.success(ip);
     }
     
@@ -300,7 +300,7 @@ public class MainActivity extends FlutterActivity
                 httpServer.stop();
             }
             
-            httpServer = new LocalHttpServer(this, port, this);
+            httpServer = new LocalHttpServer_placeholder(this, port, this);
             httpServer.start();
             
             Log.d(TAG, "HTTP server started on port " + port);
@@ -324,19 +324,19 @@ public class MainActivity extends FlutterActivity
     // ===================== DLNA =====================
     
     private void startDlna(MethodChannel.Result result) {
-        dlnaController.start();
+        /*dlnaController.*/.start();
         result.success(true);
     }
     
     private void stopDlna(MethodChannel.Result result) {
-        dlnaController.stop();
+        /*dlnaController.*/.stop();
         result.success(true);
     }
     
     private void searchDlnaDevices(MethodChannel.Result result) {
-        dlnaController.searchDevices(new DlnaController.DlnaDeviceCallback() {
+        /*dlnaController.*/.searchDevices(new /*DlnaDeviceCallback() {
             @Override
-            public void onDeviceFound(DlnaController.DlnaDevice device) {
+            public void onDeviceFound(DlnaDevice device) {
                 Map<String, String> deviceMap = new HashMap<>();
                 deviceMap.put("name", device.name);
                 deviceMap.put("uuid", device.uuid);
@@ -355,7 +355,7 @@ public class MainActivity extends FlutterActivity
     }
     
     private void castVideo(String deviceId, String videoUrl, String title, String poster, MethodChannel.Result result) {
-        dlnaController.castVideo(deviceId, videoUrl, title, poster, new DlnaController.CastCallback() {
+        /*dlnaController.*/.castVideo(deviceId, videoUrl, title, poster, new /*CastCallback() {
             @Override
             public void onSuccess() {
                 Log.d(TAG, "Cast started");
@@ -371,7 +371,7 @@ public class MainActivity extends FlutterActivity
     }
     
     private void controlDlna(String deviceId, String action, MethodChannel.Result result) {
-        dlnaController.control(deviceId, action, new DlnaController.ControlCallback() {
+        /*dlnaController.*/.control(deviceId, action, new /*ControlCallback() {
             @Override
             public void onSuccess() {
                 result.success(true);
@@ -452,7 +452,7 @@ public class MainActivity extends FlutterActivity
         result.success(true);
     }
     
-    // ===================== LocalHttpServer.ApiHandler =====================
+    // ===================== /*LocalHttpServer.ApiHandler*/ =====================
     
     @Override
     public void onPlay(float position) {
