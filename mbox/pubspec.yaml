@@ -1,0 +1,93 @@
+name: mbox
+description: A full-platform Flutter media player supporting multiple online and local sources
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # UI 和状态管理
+  flutter_localizations:
+    sdk: flutter
+  provider: ^6.1.1
+  get: ^4.6.6
+  intl: ^0.19.0
+  
+  # 网络功能
+  dio: ^5.4.0
+  http: ^1.2.0
+  web_socket_channel: ^2.4.3
+  collection: ^1.18.0
+  
+  # 数据库和存储
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  shared_preferences: ^2.2.2
+  
+  # 视频播放
+  video_player: ^2.8.2
+  chewie: ^1.7.4
+  media_kit: ^1.1.10+1
+  media_kit_video: ^1.2.4
+  media_kit_libs_video: ^1.0.4
+  
+  # 弹幕
+  danmaku: ^0.1.5
+  
+  # 文件格式解析
+  xml: ^6.5.0
+  json_annotation: ^4.8.1
+  
+  # 工具
+  path_provider: ^2.1.2
+  url_launcher: ^6.2.4
+  share_plus: ^7.2.2
+  package_info_plus: ^5.0.1
+  connectivity_plus: ^5.0.2
+  device_info_plus: ^9.1.2
+  permission_handler: ^11.3.0
+  file_picker: ^6.1.1
+  
+  # 密码学和加密
+  crypto: ^3.0.3
+  encrypt: ^5.0.3
+  
+  # 正则表达式
+  regex: ^0.1.0
+  
+  # DLNA
+  # climb: ^2.1.1  # 需要原生实现
+  
+  # HTTP 服务器
+  shelf: ^1.4.1
+  shelf_router: ^1.1.4
+  
+  # 繁简转换
+  opencc_dart: ^1.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.8
+  json_serializable: ^6.7.1
+  xml_serializable: ^2.4.1
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/configs/
+    
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: fonts/Roboto-Regular.ttf
+        - asset: fonts/Roboto-Bold.ttf
+          weight: 700

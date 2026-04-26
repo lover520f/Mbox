@@ -1,0 +1,142 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+def dartEnvironmentVariables = []
+if (project.hasProperty('dart-defines')) {
+    dartEnvironmentVariables = project.property('dart-defines')
+        .split(',')
+        .collectEntries { entry ->
+            def pair = URLDecoder.decode(entry, 'UTF-8').split('=')
+            [(pair.first()): pair.drop(1).join('=')]
+        }
+}
+
+android {
+    namespace "com.mbox.android"
+    compileSdk flutter.compileSdkVersion
+    ndkVersion flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        applicationId "com.mbox.android"
+        minSdkVersion 24
+        targetSdkVersion flutter.targetSdkVersion
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+        
+        // 支持多种 ABI
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        }
+        
+        multiDexEnabled true
+    }
+
+    // 产品风味：TV 版和手机版
+    flavorDimensions "default"
+
+    productFlavors {
+        leanback {
+            dimension "default"
+            applicationIdSuffix ".tv"
+            resValue "string", "app_name", "MBox TV"
+            manifestPlaceholders = [
+                screenOrientation: "landscape"
+            ]
+        }
+
+        mobile {
+            dimension "default"
+            resValue "string", "app_name", "MBox"
+            manifestPlaceholders = [
+                screenOrientation: "unspecified"
+            ]
+        }
+    }
+
+    signingConfigs {
+        release {
+            // 正式版签名配置
+            // storeFile file('../keystore/release.jks')
+            // storePassword ''
+            // keyAlias ''
+            // keyPassword ''
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix '.debug'
+            debuggable true
+        }
+        
+        profile {
+            applicationIdSuffix '.profile'
+        }
+        
+        release {
+            signingConfig signingConfigs.debug
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    // AAPT2 配置
+    aaptOptions {
+        noCompress 'mp4', 'mkv', 'm3u8', 'mp3'
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.multidex:multidex:2.0.1'
+    
+    // ExoPlayer (Media3)
+    implementation 'androidx.media3:media3-exoplayer:1.2.0'
+    implementation 'androidx.media3:media3-ui:1.2.0'
+    implementation 'androidx.media3:media3-common:1.2.0'
+    
+    // DLNA (Cling) - UPnP/DLNA 支持
+    implementation 'org.fourthline.cling:cling-core:2.1.1'
+    implementation 'org.fourthline.cling:cling-support:2.1.1'
+    
+    // HTTP 服务器
+    implementation 'fi.iki.elonen:nanohttpd:2.3.1'
+    
+    // 图片加载
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
+    
+    // QuickJS - JavaScript 引擎
+    implementation 'app.cash.quickjs:quickjs-android:0.9.2'
+}
