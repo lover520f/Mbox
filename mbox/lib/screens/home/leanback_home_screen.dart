@@ -5,6 +5,7 @@ import '../../provider/app_provider.dart';
 import '../../widgets/vod_grid.dart';
 import '../../widgets/source_list.dart';
 import '../../widgets/loading_dialog.dart';
+import '../../widgets/config_dialog.dart';
 import '../../crawler/spider_engine.dart';
 import '../../utils/log_utils.dart';
 
@@ -22,6 +23,7 @@ class _LeanbackHomeScreenState extends State<LeanbackHomeScreen> {
   bool _isSpiderInitialized = false;
   List<Map<String, dynamic>> _homeClasses = [];
   bool _isLoadingHome = false;
+  String? _currentSiteKey;
 
   @override
   void initState() {
@@ -37,7 +39,6 @@ class _LeanbackHomeScreenState extends State<LeanbackHomeScreen> {
         _isSpiderInitialized = true;
       });
       Log.d('Spider engine initialized');
-      // 加载首页分类
       _loadHomeContent();
     } catch (e) {
       Log.e('Failed to initialize spider engine: $e');
@@ -45,6 +46,9 @@ class _LeanbackHomeScreenState extends State<LeanbackHomeScreen> {
   }
 
   Future<void> _loadHomeContent() async {
+    final configProvider = context.read<ConfigProvider>();
+    if (configProvider.config == null) return;
+
     setState(() {
       _isLoadingHome = true;
     });
@@ -66,15 +70,38 @@ class _LeanbackHomeScreenState extends State<LeanbackHomeScreen> {
     }
   }
 
+  Future<void> _showConfigLoadDialog() async {
+    final result = await showDialog(
+      context: context,
+      builder: (context) => const ConfigLoadDialog(),
+    );
+    
+    if (result == true) {
+      _loadHomeContent();
+    }
+  }
+
+  Future<void> _showSourceListDialog() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => const SourceListDialog(),
+    );
+    
+    if (result != null && result != _currentSiteKey) {
+      setState(() {
+        _currentSiteKey = result;
+      });
+      Log.d('Switched to site: $_currentSiteKey');
+      _loadHomeContent();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Row(
         children: [
-          // 左侧导航栏
           _buildNavigationBar(),
-          
-          // 右侧内容区
           Expanded(
             child: _buildContentArea(),
           ),
@@ -117,6 +144,7 @@ class _LeanbackHomeScreenState extends State<LeanbackHomeScreen> {
 
   Widget _buildNavItem(int index) {
     final titles = ['首页', '直播', '搜索', '设置'];
+    final icons = [Icons.home, Icons.live_tv, Icons.search, Icons.settings];
     final isSelected = _currentTabIndex == index;
     
     return Container(
@@ -126,6 +154,7 @@ class _LeanbackHomeScreenState extends State<LeanbackHomeScreen> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
+        leading: Icon(icons[index], color: Colors.white),
         title: Text(
           titles[index],
           style: const TextStyle(
@@ -151,10 +180,6 @@ class _LeanbackHomeScreenState extends State<LeanbackHomeScreen> {
       );
     }
     
-    if (configProvider.config == null) {
-      return _buildEmptyState();
-    }
-    
     return IndexedStack(
       index: _currentTabIndex,
       children: [
@@ -166,37 +191,9 @@ class _LeanbackHomeScreenState extends State<LeanbackHomeScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.cloud_upload_outlined,
-            size: 80,
-            color: Colors.white54,
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            '请先加载配置',
-            style: TextStyle(
-              fontSize: 24,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              // TODO: 打开配置加载对话框
-            },
-            child: const Text('加载配置'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildHomeTab() {
+    final configProvider = context.watch<ConfigProvider>();
+    
     if (!_isSpiderInitialized) {
       return const Center(
         child: Column(
@@ -240,16 +237,25 @@ class _LeanbackHomeScreenState extends State<LeanbackHomeScreen> {
               color: Colors.white54,
             ),
             const SizedBox(height: 24),
-            const Text(
-              '暂无内容',
-              style: TextStyle(fontSize: 24, color: Colors.white),
+            Text(
+              configProvider.config == null ? '请先加载配置' : '暂无内容',
+              style: const TextStyle(fontSize: 24, color: Colors.white),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                _loadHomeContent();
-              },
-              child: const Text('刷新'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (configProvider.config == null)
+                  ElevatedButton(
+                    onPressed: _showConfigLoadDialog,
+                    child: const Text('加载配置'),
+                  ),
+                if (configProvider.config != null)
+                  ElevatedButton(
+                    onPressed: _loadHomeContent,
+                    child: const Text('刷新'),
+                  ),
+              ],
             ),
           ],
         ),
@@ -261,16 +267,30 @@ class _LeanbackHomeScreenState extends State<LeanbackHomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '推荐',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+          Row(
+            children: [
+              const Text(
+                '推荐',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const Spacer(),
+              ElevatedButton.icon(
+                onPressed: _showSourceListDialog,
+                icon: const Icon(Icons.swap_horiz),
+                label: Text(
+                  configProvider.config?.sites.firstWhere(
+                    (s) => s.key == _currentSiteKey,
+                    orElse: () => configProvider.config!.sites.first,
+                  ).name ?? '选择站点',
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
-          // 分类列表
           SizedBox(
             height: 50,
             child: ListView.builder(
@@ -278,7 +298,6 @@ class _LeanbackHomeScreenState extends State<LeanbackHomeScreen> {
               itemCount: _homeClasses.length + 1,
               itemBuilder: (context, index) {
                 if (index == 0) {
-                  // 全部按钮
                   return Padding(
                     padding: const EdgeInsets.only(right: 8.0),
                     child: Chip(

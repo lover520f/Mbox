@@ -58,8 +58,9 @@ android {
         abi {
             enable true
             reset()
-            include 'armeabi-v7a', 'arm64-v8a', 'x86_64'
-            universalApk true
+            // 只构建 32 位和 64 位 ARM 架构
+            include 'armeabi-v7a', 'arm64-v8a'
+            universalApk false
         }
     }
 
