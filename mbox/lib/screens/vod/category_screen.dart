@@ -50,11 +50,26 @@ class _CategoryScreenState extends State<CategoryScreen> {
         throw Exception('配置未加载');
       }
 
-      // TODO: 调用爬虫的 categoryContent 方法
-      // 这里是模拟数据
-      await Future.delayed(const Duration(seconds: 1));
+      // 调用爬虫的分类接口
+      final result = await configProvider.getCategoryContent(
+        config.sites.first.key,
+        widget.typeId,
+        '$_currentPage',
+        extend: _selectedFilters.isNotEmpty 
+            ? _selectedFilters.entries.map((e) => '${e.key}=${e.value}').join('&')
+            : null,
+      );
+      
+      final List<dynamic> list = result['list'] ?? [];
+      final newItems = list.map((item) => Vod.fromJson(item as Map<String, dynamic>)).toList();
       
       setState(() {
+        if (_currentPage == 1) {
+          _items = newItems;
+        } else {
+          _items.addAll(newItems);
+        }
+        _totalPages = result['pagecount'] as int? ?? 1;
         _isLoading = false;
       });
     } catch (e) {

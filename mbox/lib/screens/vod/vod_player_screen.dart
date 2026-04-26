@@ -163,14 +163,25 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
   }
 
   void _nextEpisode() {
-    // TODO: 播放下一集
-    Get.snackbar('提示', '已经是最新一集');
+    final args = Get.arguments as Map<String, dynamic>?;
+    final episodeCount = args?['episodeCount'] as int? ?? 1;
+    
+    if (_episodeIndex < episodeCount - 1) {
+      // 切换到下一集
+      final nextIndex = _episodeIndex + 1;
+      // TODO: 获取下一集的 URL 并重新加载
+      Get.snackbar('提示', '切换到第${nextIndex + 1}集');
+    } else {
+      Get.snackbar('提示', '已经是最新一集');
+    }
   }
 
   void _prevEpisode() {
-    // TODO: 播放上一集
     if (_episodeIndex > 0) {
       // 切换到上一集
+      final prevIndex = _episodeIndex - 1;
+      // TODO: 获取上一集的 URL 并重新加载
+      Get.snackbar('提示', '切换到第${prevIndex + 1}集');
     } else {
       Get.snackbar('提示', '已经是第一集');
     }

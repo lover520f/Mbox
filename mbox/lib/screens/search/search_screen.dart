@@ -123,10 +123,9 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Future<List<Vod>> _searchSite(Site site, String keyword) async {
     try {
-      // TODO: 调用爬虫的 searchContent 方法
-      // 这里是占位实现
-      await Future.delayed(const Duration(milliseconds: 500));
-      return [];
+      final configProvider = context.read<ConfigProvider>();
+      final results = await configProvider.search(site.key, keyword, quick: false);
+      return results;
     } catch (e) {
       return [];
     }
