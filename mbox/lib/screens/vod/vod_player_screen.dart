@@ -194,7 +194,7 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
         title: const Text('播放速度'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map((speed) {
+          children: [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0].map((speed) {
             return ListTile(
               title: Text('${speed}x'),
               onTap: () {
