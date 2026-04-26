@@ -123,13 +123,13 @@ public class LocalHttpServer extends NanoHTTPD {
     private Response handleProxy(IHTTPSession session, String path, Method method) throws Exception {
         // 代理到爬虫的 proxy 接口
         Map<String, String> params = session.getParms();
-        String do = params.get("do");
+        String operation = params.get("operation");
         
-        if (do == null) {
-            return jsonResponse("{\"error\": \"Missing 'do' parameter\"}");
+        if (operation == null) {
+            return jsonResponse("{\"error\": \"Missing 'operation' parameter\"}");
         }
         
-        String result = apiHandler.onProxyInvoke(do, params);
+        String result = apiHandler.onProxyInvoke(operation, params);
         return newFixedLengthResponse(Response.Status.OK, 
             "application/json", result);
     }
@@ -376,6 +376,6 @@ public class LocalHttpServer extends NanoHTTPD {
         String onDetail(String site, String id);
         String onHome(String site);
         String onCategory(String site, String tid, String pg, boolean filter, Map<String, String> params);
-        String onProxyInvoke(String do, Map<String, String> params);
+        String onProxyInvoke(String operation, Map<String, String> params);
     }
 }

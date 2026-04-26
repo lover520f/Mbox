@@ -539,7 +539,7 @@ public class MainActivity extends FlutterActivity
     }
 
     @Override
-    public String onProxyInvoke(String do, Map<String, String> params) {
+    public String onProxyInvoke(String operation, Map<String, String> params) {
         // TODO: 调用爬虫的 proxy 接口
         return "{\"code\": 0, \"msg\": \"success\"}";
     }
