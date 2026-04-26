@@ -54,7 +54,7 @@ class MBoxPlayerController {
     
     _player = Player(
       configuration: const PlayerConfiguration(
-        logLevel: LogLevel.warning,
+        logLevel: LogLevel.error,
       ),
     );
     
@@ -66,7 +66,7 @@ class MBoxPlayerController {
     );
     
     // 监听播放器状态
-    _player.stream.playerState.listen((state) {
+    _player.stream.state.listen((state) {
       _updateState(state);
     });
     

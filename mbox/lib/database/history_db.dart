@@ -4,8 +4,8 @@ import '../utils/log_utils.dart';
 
 /// 历史记录数据库管理
 class HistoryDatabase {
-  staticlate String boxName = 'watch_history';
-  staticlate late Box<WatchHistory> _box;
+  static late String boxName = 'watch_history';
+  static late Box<WatchHistory> _box;
 
   /// 初始化数据库
   static Future<void> init() async {

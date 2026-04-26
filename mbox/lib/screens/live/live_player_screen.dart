@@ -65,7 +65,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
     try {
       _player = Player(
         configuration: const PlayerConfiguration(
-          logLevel: LogLevel.warning,
+          logLevel: LogLevel.error,
         ),
       );
 
@@ -73,12 +73,11 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
         _player!,
         configuration: const video.VideoControllerConfiguration(
           enableHardwareAcceleration: true,
-          fit: BoxFit.contain,
         ),
       );
 
       // 设置监听器
-      _player!.stream.playerState.listen((state) {
+      _player!.stream.state.listen((state) {
         setState(() {
           _isBuffering = state.buffering;
           _isPlaying = state.playing;
@@ -221,7 +220,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isTV = DeviceUtils.isTV(context);
+    final isTV = await DeviceUtils.isTV();
     
     return Scaffold(
       backgroundColor: Colors.black,

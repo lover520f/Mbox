@@ -7,10 +7,10 @@ import '../utils/log_utils.dart';
 /// 网络工具类
 /// 封装 HTTP 请求，支持代理、DoH、Hosts 等功能
 class OkHttpUtils {
-  staticlate Dio? _dio;
-  staticlate String? _proxyUrl;
-  staticlate Map<String, String> _hosts = {};
-  staticlate String _localIp = '127.0.0.1';
+  static late Dio? _dio;
+  static late String? _proxyUrl;
+  static late Map<String, String> _hosts = {};
+  static late String _localIp = '127.0.0.1';
   
   /// 初始化
   static Future<void> init() async {

@@ -35,8 +35,7 @@ dependencies:
   media_kit_video: ^1.2.4
   media_kit_libs_video: ^1.0.4
   
-  # 弹幕
-  danmaku: ^0.1.5
+  # 弹幕（使用自定义实现）
   
   # 文件格式解析
   xml: ^6.5.0
@@ -57,7 +56,6 @@ dependencies:
   encrypt: ^5.0.3
   
   # 正则表达式
-  regex: ^0.1.0
   
   # DLNA
   # climb: ^2.1.1  # 需要原生实现
@@ -67,7 +65,6 @@ dependencies:
   shelf_router: ^1.1.4
   
   # 繁简转换
-  opencc_dart: ^1.0.0
 
 dev_dependencies:
   flutter_test:

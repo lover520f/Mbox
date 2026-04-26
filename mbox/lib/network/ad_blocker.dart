@@ -4,9 +4,9 @@ import '../utils/log_utils.dart';
 
 /// 广告拦截器
 class AdBlocker {
-  staticlate List<String> _domains = [];
-  staticlate Map<String, RegExp> _regexRules = {};
-  staticlate List<String> _blockedRequests = [];
+  static late List<String> _domains = [];
+  static late Map<String, RegExp> _regexRules = {};
+  static late List<String> _blockedRequests = [];
 
   /// 初始化
   static Future<void> init(List<String> ads) async {

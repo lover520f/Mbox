@@ -5,11 +5,11 @@ import '../utils/log_utils.dart';
 
 /// DNS over HTTPS 解析器
 class DoHResolver {
-  staticlate Dio? _dio;
-  staticlate List<Doh> _servers = [];
-  staticlate Map<String, String> _cache = {};
-  static const int _cacheTTL = 300; // 5 分钟
-  staticlate Map<String, int> _cacheTime = {};
+  static late Dio? _dio;
+  static late List<Doh> _servers = [];
+  static late Map<String, String> _cache = {};
+  static const int _cacheTTL = 300;
+  static late Map<String, int> _cacheTime = {};
 
   /// 初始化
   static Future<void> init(List<Doh> servers) async {

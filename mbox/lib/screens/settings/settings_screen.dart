@@ -86,7 +86,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Consumer<AppProvider>(
                 builder: (context, appProvider, child) {
                   return SwitchListTile(
-                    leading: const Icon(Icons.dark_mode),
+                    
                     title: const Text('暗色模式'),
                     value: appProvider.isDarkMode,
                     onChanged: (value) {

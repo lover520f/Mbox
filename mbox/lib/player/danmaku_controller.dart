@@ -152,7 +152,7 @@ class DanmakuController {
   final danmaku.DanmakuController? _controller;
   final List<DanmakuItem> _items = [];
   bool _isPlaying = false;
-  Duration _ currentPosition = Duration.zero;
+  Duration _currentPosition = Duration.zero;
   Timer? _timer;
 
   DanmakuController(this._controller);

@@ -10,14 +10,14 @@ import '../utils/log_utils.dart';
 
 /// 应用配置管理类
 class AppConfig {
-  staticlate String boxName = 'app_config';
-  staticlate late Box _box;
-  staticlate String? _configPath;
-  staticlate VodConfig? _currentConfig;
+  static late String boxName = 'app_config';
+  static late Box _box;
+  static late String? _configPath;
+  static late VodConfig? _currentConfig;
   
   // HTTP 服务器相关
-  staticlate int _serverPort = 9978;
-  staticlate Server? _httpServer;
+  static late int _serverPort = 9978;
+  static late Server? _httpServer;
 
   /// 初始化配置
   static Future<void> init() async {

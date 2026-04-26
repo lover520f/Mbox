@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import '../models/vod_config.dart';
-import '../network/okhttp_utils.dart';
+import '../network/okhttp_client.dart';
 import '../utils/log_utils.dart';
 
 /// Spider 加载器 - 支持多种语言爬虫

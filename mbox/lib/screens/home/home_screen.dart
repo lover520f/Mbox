@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
-import '../provider/app_provider.dart';
-import '../provider/config_provider.dart';
-import 'home/leanback_home_screen.dart';
-import 'home/mobile_home_screen.dart';
+import '../../provider/app_provider.dart';
+import '../../provider/config_provider.dart';
+import '../home/leanback_home_screen.dart';
+import '../home/mobile_home_screen.dart';
 import '../../utils/device_utils.dart';
 
 /// 首页
