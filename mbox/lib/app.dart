@@ -7,6 +7,7 @@ import 'provider/app_provider.dart';
 import 'provider/config_provider.dart';
 import 'provider/player_provider.dart';
 import 'routes/app_routes.dart';
+import 'network/okhttp_client.dart';
 import 'utils/locale_utils.dart';
 
 class MBoxApp extends StatelessWidget {
@@ -14,6 +15,9 @@ class MBoxApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 初始化网络工具
+    OkHttpUtils.init();
+    
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AppProvider()),

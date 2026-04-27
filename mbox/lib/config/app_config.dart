@@ -43,11 +43,18 @@ class AppConfig {
       
       // 判断是 URL 还是本地路径
       if (source.startsWith('http://') || source.startsWith('https://')) {
-        configStr = await OkHttpUtils.get(source);
+        Log.d('Loading config from URL: $source');
+        configStr = await OkHttpUtils.get(source, headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/json',
+        });
+        Log.d('Config loaded, length: ${configStr.length}');
       } else if (source.endsWith('.json')) {
+        Log.d('Loading config from file: $source');
         configStr = await File(source).readAsString();
       } else {
         // 直接是 JSON 字符串
+        Log.d('Parsing JSON config string');
         configStr = source;
       }
       
@@ -67,9 +74,10 @@ class AppConfig {
       Log.d('Config loaded: ${_currentConfig?.sites.length} sites, ${_currentConfig?.lives.length} lives');
       
       return _currentConfig;
-    } catch (e) {
+    } catch (e, stackTrace) {
       Log.e('Failed to load config: $e');
-      return null;
+      Log.e('Stack trace: $stackTrace');
+      rethrow;
     }
   }
 
