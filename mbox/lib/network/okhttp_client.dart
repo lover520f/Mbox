@@ -7,10 +7,10 @@ import '../utils/log_utils.dart';
 /// 网络工具类
 /// 封装 HTTP 请求，支持代理、DoH、Hosts 等功能
 class OkHttpUtils {
-  static late Dio? _dio;
-  static late String? _proxyUrl;
-  static late Map<String, String> _hosts = {};
-  static late String _localIp = '127.0.0.1';
+  static Dio? _dio;
+  static String? _proxyUrl;
+  static Map<String, String> _hosts = {};
+  static String _localIp = '127.0.0.1';
   
   /// 初始化
   static Future<void> init() async {
@@ -78,6 +78,14 @@ class OkHttpUtils {
     
     return '127.0.0.1';
   }
+  
+  /// 获取本地 IP（公共方法）
+  static Future<String> getLocalIp() async {
+    if (_localIp == '127.0.0.1') {
+      _localIp = await _getLocalIp();
+    }
+    return _localIp;
+  }
 
   /// 应用代理规则
   static void _applyProxy(RequestOptions options) {
@@ -128,6 +136,11 @@ class OkHttpUtils {
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
+      // 确保已初始化
+      if (_dio == null) {
+        await init();
+      }
+      
       final response = await _dio!.get(
         url,
         options: Options(headers: headers),

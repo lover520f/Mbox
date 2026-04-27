@@ -136,7 +136,10 @@ class AppConfig {
   static int get serverPort => _serverPort;
 
   /// 获取 HTTP 服务器地址
-  static String get serverAddress => 'http://${OkHttpUtils.localIp}:$_serverPort';
+  static Future<String> get serverAddress async {
+    final ip = await OkHttpUtils.getLocalIp();
+    return 'http://$ip:$_serverPort';
+  }
 
   /// 停止 HTTP 服务器
   static Future<void> stopHttpServer() async {
