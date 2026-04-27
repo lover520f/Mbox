@@ -7,7 +7,6 @@ import 'provider/app_provider.dart';
 import 'provider/config_provider.dart';
 import 'provider/player_provider.dart';
 import 'routes/app_routes.dart';
-import 'screens/home/home_screen.dart';
 import 'utils/locale_utils.dart';
 
 class MBoxApp extends StatelessWidget {
@@ -40,7 +39,6 @@ class MBoxApp extends StatelessWidget {
         ],
         initialRoute: AppRoutes.home,
         getPages: AppRoutes.routes,
-        home: const HomeScreen(),
       ),
     );
   }
