@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import '../models/sub.dart';
-import '../network/okhttp_utils.dart';
+import '../network/okhttp_client.dart';
 import '../utils/log_utils.dart';
 
 /// 字幕数据项
