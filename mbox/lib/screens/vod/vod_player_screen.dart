@@ -10,6 +10,9 @@ import '../../models/danmaku.dart';
 import '../../provider/player_provider.dart';
 import '../../utils/device_utils.dart';
 import '../../utils/log_utils.dart';
+import '../../utils/danmaku_controller.dart';
+import '../../widgets/danmaku_overlay.dart';
+import '../../widgets/danmaku_settings.dart';
 
 /// 点播播放器页面
 class VodPlayerScreen extends StatefulWidget {
@@ -26,6 +29,9 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
   Vod? _vod;
   int _episodeIndex = 0;
   String? _videoUrl;
+  
+  // 弹幕控制器
+  DanmakuController? _danmakuController;
   
   bool _showControls = true;
   Timer? _hideTimer;
@@ -89,6 +95,8 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
         setState(() {
           _position = position;
         });
+        // 同步弹幕进度
+        _danmakuController?.seekTo(position.inMilliseconds / 1000.0);
       });
 
       _player!.stream.duration.listen((duration) {
@@ -102,6 +110,16 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
         Media(_videoUrl!),
         play: true,
       );
+      
+      // 设置弹幕屏幕尺寸
+      final size = MediaQuery.of(context).size;
+      _danmakuController?.setScreenSize(size.width, size.height);
+      
+      // 启动弹幕
+      _danmakuController?.play();
+      
+      // 加载弹幕（如果有）
+      _loadDanmaku();
 
       _startHideTimer();
     } catch (e) {
@@ -142,8 +160,10 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
     
     if (_isPlaying) {
       await _player!.pause();
+      _danmakuController?.pause();
     } else {
       await _player!.play();
+      _danmakuController?.play();
     }
     _startHideTimer();
   }
@@ -244,34 +264,37 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
     );
   }
 
-  void _showDanmakuDialog() {
-    showDialog(
+  void _showDanmakuDialog() async {
+    if (_danmakuController == null) return;
+    
+    final result = await showDialog<DanmakuConfig>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('弹幕'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SwitchListTile(
-              title: const Text('开启弹幕'),
-              value: _showDanmakus,
-              onChanged: (value) {
-                setState(() {
-                  _showDanmakus = value;
-                });
-              },
-            ),
-            // TODO: 弹幕设置
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('关闭'),
-          ),
-        ],
+      builder: (context) => DanmakuSettingsDialog(
+        config: _danmakuController!.configCopy,
       ),
     );
+    
+    if (result != null) {
+      _danmakuController!.setConfig(result);
+    }
+  }
+  
+  void _loadDanmaku() async {
+    if (_danmakuController == null || _videoUrl == null) return;
+    
+    // TODO: 从播放器 URL 推断弹幕 URL，或从配置中获取
+    // 示例：https://example.com/video.mp4 -> https://example.com/danmaku.xml
+    try {
+      final danmakuUrl = _videoUrl!.replaceAll('.mp4', '.xml').replaceAll('.m3u8', '.xml');
+      await _danmakuController!.loadFromUrl(danmakuUrl);
+      
+      if (mounted) {
+        Get.snackbar('弹幕', '加载了${_danmakuController!.danmakuCount}条弹幕');
+      }
+    } catch (e) {
+      Log.e('Load danmaku error: $e');
+      // 静默失败，不显示错误
+    }
   }
 
   String _formatDuration(Duration duration) {
@@ -300,7 +323,13 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
                     // 视频画面
                     Center(
                       child: _videoController != null
-                          ? video.Video(controller: _videoController!)
+                          ? Stack(
+                              children: [
+                                video.Video(controller: _videoController!),
+                                // 弹幕覆盖层
+                                DanmakuOverlay(controller: _danmakuController!),
+                              ],
+                            )
                           : const CircularProgressIndicator(),
                     ),
                     
@@ -409,12 +438,25 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.cast),
+            icon: Icon(_showDanmakus ? Icons.live_tv : Icons.live_tv_outlined),
             color: Colors.white,
             onPressed: () {
-              // TODO: DLNA 投屏
-              Get.snackbar('提示', 'DLNA 功能开发中');
+              if (_danmakuController != null && !_danmakuController!.isLoaded) {
+                _loadDanmaku();
+              } else {
+                _showDanmakuDialog();
+              }
             },
+          ),
+          IconButton(
+            icon: Icon(_showSubtitles ? Icons.subtitles : Icons.subtitles_outlined),
+            color: Colors.white,
+            onPressed: _showSubtitleDialog,
+          ),
+          IconButton(
+            icon: Icon(Icons.settings),
+            color: Colors.white,
+            onPressed: _showSpeedDialog,
           ),
         ],
       ),
@@ -588,9 +630,17 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _danmakuController = DanmakuController();
+  }
+  
+  @override
   void dispose() {
     _hideTimer?.cancel();
+    _danmakuController?.dispose();
     _player?.dispose();
+    _videoController = null;
     super.dispose();
   }
 }
