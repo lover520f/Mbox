@@ -4,13 +4,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.WindowManager;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
-import org.json.JSONArray;
 import org.json.JSONObject;
-import java.util.HashMap;
 import java.util.Map;
 
 public class MainActivity extends FlutterActivity {
@@ -19,6 +16,8 @@ public class MainActivity extends FlutterActivity {
     
     private MethodChannel methodChannel;
     private JsSpiderLoader jsLoader;
+    private JarSpiderLoader jarLoader;
+    private int currentSpiderType = 0; // 0=JS, 3=JAR
     
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
@@ -32,28 +31,27 @@ public class MainActivity extends FlutterActivity {
                     init((Map<String, Object>) call.arguments);
                     result.success(true);
                     break;
-                case "spiderInit":
-                    String jar = call.argument("jar");
+                case "initSpider":
+                    Integer type = call.argument("type");
+                    String spiderPath = call.argument("path");
                     String extend = call.argument("extend");
-                    spiderInit(jar, extend, result);
+                    initSpider(type, spiderPath, extend, result);
                     break;
                 case "spiderHome":
-                    String content = call.argument("content");
-                    result.success(spiderHome(content));
+                    Boolean filter = call.argument("filter");
+                    result.success(spiderHome(filter != null && filter));
                     break;
                 case "spiderCategory":
                     result.success(spiderCategory(
                         call.argument("tid"),
                         call.argument("pg"),
-                        call.argument("filter"),
+                        call.argument("filter") != null && (Boolean) call.argument("filter"),
                         call.argument("extend")
                     ));
                     break;
                 case "spiderDetail":
-                    result.success(spiderDetail(
-                        call.argument("flag"),
-                        call.argument("id")
-                    ));
+                    String id = call.argument("id");
+                    result.success(spiderDetail(id));
                     break;
                 case "spiderPlay":
                     result.success(spiderPlay(
@@ -72,17 +70,8 @@ public class MainActivity extends FlutterActivity {
                     spiderDestroy();
                     result.success(true);
                     break;
-                case "jsSpiderInit":
-                    String jsPath = call.argument("path");
-                    jsSpiderInit(jsPath, result);
-                    break;
-                case "jsSpiderInvoke":
-                    String func = call.argument("func");
-                    String params = call.argument("params");
-                    jsSpiderInvoke(func, params, result);
-                    break;
                 case "keepScreenOn":
-                    boolean keepOn = call.argument("keepOn");
+                    boolean keepOn = call.argument("keepOn") != null && (boolean) call.argument("keepOn");
                     keepScreenOn(keepOn);
                     result.success(true);
                     break;
@@ -92,18 +81,41 @@ public class MainActivity extends FlutterActivity {
         });
         
         jsLoader = new JsSpiderLoader();
+        jarLoader = new JarSpiderLoader();
     }
     
     private void init(Map<String, Object> args) {
         try {
             Log.d(TAG, "Initializing...");
-            // 从 assets 加载爬虫脚本
-            if (jsLoader != null) {
-                jsLoader.init(this, "spider.js");
-                Log.d(TAG, "Spider loaded successfully");
-            }
         } catch (Exception e) {
             Log.e(TAG, "Init error: " + e.getMessage());
+        }
+    }
+    
+    private void initSpider(Integer type, String path, String extend, MethodChannel.Result result) {
+        try {
+            if (type == null) {
+                result.error("INVALID_TYPE", "Spider type is required", null);
+                return;
+            }
+            
+            currentSpiderType = type;
+            Log.d(TAG, "Init spider: type=" + type + ", path=" + path);
+            
+            if (type == 0 || type == 1 || type == 4) {
+                // JS Spider (Type 0=XML 中的 JS, Type 1/4=JSON 中的 JS)
+                jsLoader.init(this, path);
+                result.success("{\"code\": 200, \"msg\": \"JS spider initialized\"}");
+            } else if (type == 3) {
+                // JAR Spider (Type 3)
+                jarLoader.init(this, path, extend != null ? extend : "");
+                result.success("{\"code\": 200, \"msg\": \"JAR spider initialized\"}");
+            } else {
+                result.error("UNSUPPORTED_TYPE", "Unsupported spider type: " + type, null);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Spider init error: " + e.getMessage());
+            result.error("SPIDER_INIT_ERROR", e.getMessage(), null);
         }
     }
     
@@ -116,45 +128,101 @@ public class MainActivity extends FlutterActivity {
         }
     }
     
-    private String spiderHome(String content) {
-        return "{\"class\":[{\"type_id\":\"1\",\"type_name\":\"电影\"},{\"type_id\":\"2\",\"type_name\":\"电视剧\"}]}";
-    }
-    
-    private String spiderCategory(String tid, String pg, String filter, String extend) {
-        return "{\"list\":[],\"page\":1,\"pagecount\":1,\"limit\":20,\"total\":0}";
-    }
-    
-    private String spiderDetail(String flag, String id) {
-        return "{\"list\":[{\"vod_id\":\"" + id + "\",\"vod_name\":\"测试视频\",\"type_name\":\"测试\",\"vod_pic\":\"https://via.placeholder.com/300x450\",\"vod_remarks\":\"HD\",\"vod_year\":\"2024\",\"vod_area\":\"中国\",\"vod_content\":\"这是一个测试视频\",\"vod_play_from\":\"test\",\"vod_play_url\":\"第1集$http://example.com/video.mp4\"}]}";
-    }
-    
-    private String spiderPlay(String flag, String id, String vipFlags) {
-        return "{\"parse\":0,\"url\":\"http://example.com/video.mp4\"}";
-    }
-    
-    private String spiderSearch(String quick, String wd) {
-        return "{\"list\":[{\"vod_id\":\"1\",\"vod_name\":\"搜索结果\",\"type_name\":\"测试\",\"vod_pic\":\"https://via.placeholder.com/300x450\",\"vod_remarks\":\"HD\"}]}";
-    }
-    
-    private void spiderDestroy() {
-        Log.d(TAG, "Spider destroyed");
-    }
-    
-    private void jsSpiderInit(String path, MethodChannel.Result result) {
+    private String spiderHome(boolean filter) {
         try {
-            jsLoader.init(this, path);
-            result.success(true);
+            if (currentSpiderType == 3) {
+                return jarLoader.homeContent(filter);
+            } else {
+                return jsLoader.invoke("home", "{}");
+            }
         } catch (Exception e) {
-            result.error("JS_INIT_ERROR", e.getMessage(), null);
+            Log.e(TAG, "Home error: " + e.getMessage());
+            return "{\"class\":[],\"filters\":{}}";
         }
     }
     
-    private void jsSpiderInvoke(String func, String params, MethodChannel.Result result) {
+    private String spiderCategory(String tid, String pg, boolean filter, String extend) {
         try {
-            String jsResult = jsLoader.invoke(func, params);
-            result.success(jsResult != null ? jsResult : "");
+            if (currentSpiderType == 3) {
+                return jarLoader.categoryContent(tid, pg, filter, extend != null ? extend : "");
+            } else {
+                String params = new JSONObject()
+                    .put("tid", tid)
+                    .put("page", pg)
+                    .put("filter", filter)
+                    .put("extend", extend != null ? extend : "")
+                    .toString();
+                return jsLoader.invoke("category", params);
+            }
         } catch (Exception e) {
-            result.error("JS_INVOKE_ERROR", e.getMessage(), null);
+            Log.e(TAG, "Category error: " + e.getMessage());
+            return "{\"list\":[],\"page\":1,\"pagecount\":1,\"limit\":20,\"total\":0}";
+        }
+    }
+    
+    private String spiderDetail(String id) {
+        try {
+            if (currentSpiderType == 3) {
+                return jarLoader.detailContent(id);
+            } else {
+                String params = new JSONObject()
+                    .put("flag", "")
+                    .put("id", id)
+                    .toString();
+                return jsLoader.invoke("detail", params);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Detail error: " + e.getMessage());
+            return "{\"list\":[]}";
+        }
+    }
+    
+    private String spiderPlay(String flag, String id, String vipFlags) {
+        try {
+            if (currentSpiderType == 3) {
+                return jarLoader.playerContent(flag != null ? flag : "", id != null ? id : "", vipFlags != null ? vipFlags : "");
+            } else {
+                String params = new JSONObject()
+                    .put("flag", flag != null ? flag : "")
+                    .put("id", id != null ? id : "")
+                    .put("vipFlags", vipFlags != null ? vipFlags : "")
+                    .toString();
+                return jsLoader.invoke("play", params);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Play error: " + e.getMessage());
+            return "{\"parse\":0,\"url\":\"\"}";
+        }
+    }
+    
+    private String spiderSearch(Object quick, String wd) {
+        try {
+            boolean quickSearch = quick != null && (quick instanceof Boolean ? (Boolean) quick : quick.equals("true"));
+            if (currentSpiderType == 3) {
+                return jarLoader.searchContent(wd != null ? wd : "", quickSearch);
+            } else {
+                String params = new JSONObject()
+                    .put("quick", quickSearch)
+                    .put("wd", wd != null ? wd : "")
+                    .toString();
+                return jsLoader.invoke("search", params);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Search error: " + e.getMessage());
+            return "{\"list\":[]}";
+        }
+    }
+    
+    private void spiderDestroy() {
+        try {
+            if (currentSpiderType == 3) {
+                jarLoader.destroy();
+            } else {
+                jsLoader.destroy();
+            }
+            Log.d(TAG, "Spider destroyed");
+        } catch (Exception e) {
+            Log.e(TAG, "Destroy error: " + e.getMessage());
         }
     }
     
@@ -173,6 +241,9 @@ public class MainActivity extends FlutterActivity {
         super.onDestroy();
         if (jsLoader != null) {
             jsLoader.destroy();
+        }
+        if (jarLoader != null) {
+            jarLoader.destroy();
         }
     }
 }

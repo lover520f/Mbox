@@ -46,7 +46,7 @@ class _VodHomeScreenState extends State<VodHomeScreen> with TickerProviderStateM
 
     try {
       // 加载分类
-      final result = await SpiderEngine.home('');
+      final result = await SpiderEngine.home(false);
       if (result['class'] != null && result['class'] is List) {
         setState(() {
           _categories = List<Map<String, dynamic>>.from(result['class']);

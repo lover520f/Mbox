@@ -87,8 +87,8 @@ class ConfigProvider extends ChangeNotifier {
       
       Log.d('Getting detail: siteId=$siteId, vodId=$vodId');
       
-      // 调用爬虫详情接口
-      final result = await SpiderEngine.detail(siteId, vodId);
+      // 调用爬虫详情接口（只传 vodId）
+      final result = await SpiderEngine.detail(vodId);
       
       if (result['list'] != null && result['list'] is List && (result['list'] as List).isNotEmpty) {
         final data = result['list'][0] as Map<String, dynamic>;
